@@ -15,6 +15,16 @@ function getFile(name: string): Promise<File> {
   return delay(1000, { name, body: "...", size: 100 });
 }
 
+async function concurrent(limit, ps) {
+  await Promise.all([ps[0], ps[1], ps[2]]);
+  await Promise.all([ps[3], ps[4], ps[5]]);
+}
+
+async function concurrent2(limit, ps) {
+  await Promise.all([ps[0](), ps[1](), ps[2]()]);
+  await Promise.all([ps[3](), ps[4](), ps[5]()]);
+}
+
 export async function main() {
   const file = getFile("file1.png");
 
@@ -27,4 +37,30 @@ export async function main() {
   } else {
     console.log("즉시 그려라", result);
   }
+
+  // 병렬적으로 실행
+  const files = await Promise.all([
+    getFile("file.png"),
+    getFile("file1.png"),
+    getFile("file2.png"),
+    getFile("file3.png"),
+  ]);
+
+  // 부하를 줄이고 싶을 때 (한번에 다 요청하면 안될때)
+
+  // 저 자리에서 이미 다 평가가 됨 -> await 으로 제어 못함
+  const files = await concurrent(3, [
+    getFile("file.png"),
+    getFile("file1.png"),
+    getFile("file2.png"),
+    getFile("file3.png"),
+  ]);
+
+  // 지연 평가를 사용하면 된다.
+  const files = await concurrent2(3, [
+    () => getFile("file.png"),
+    () => getFile("file1.png"),
+    () => getFile("file2.png"),
+    () => getFile("file3.png"),
+  ]);
 }
