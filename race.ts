@@ -25,6 +25,23 @@ async function concurrent2(limit, ps) {
   await Promise.all([ps[3](), ps[4](), ps[5]()]);
 }
 
+async function concurrent3(limit: number, fs: (() => Promise<T>)[]){
+  const result: T[][] = [];
+  // 명령형 코드 : 넘모 무섭다.
+  for (let i = 0; i < fs.length / limit; i++;){
+    const tmp: Promise<T>[] = [];
+    for (let j = 0; j < limit; j++;){
+      const f = fs[i*limit+j];
+      if (f){
+        tmp.push(f());
+      }
+    }
+    result.push(await Promise.all(tmp));
+  }
+  return result.flat();
+}
+
+
 export async function main() {
   const file = getFile("file1.png");
 
