@@ -41,6 +41,41 @@ async function concurrent3(limit: number, fs: (() => Promise<T>)[]){
   return result.flat();
 }
 
+function* gen(){
+  for (let i = 0; i < 4; i++){
+    yield i;
+  }
+}
+
+function* take(length: number, iterable: Iterable<T>){
+  const iterator = iterable[Symbol.iterator]();
+  while(length-- > 0){
+    const {value, done} = iterator.next();
+    if (done) break;
+    yield value;
+  }
+}
+
+function* chunk<T>(size: number, iterable: iterable<T>){
+  const iterator = iterable[Symbol.iterator]();
+  // 언제 끝나야 할지 잘 모를때는 무한루프로 만들자 
+  while (true){
+    // 만약 yield를 안하는 상황이 생기면 브라우저가 죽음
+    const arr = [...take(size, { [Symbol.iterator]() { return iterator;}})];
+    if (arr.length) yield arr;
+    if (arr.length < size) break;
+
+    yield 'remove me !!'; // 꿀팁: 여기서 무조건 잡아줄 것이므로 브라우저가 죽지 않음. 
+  }
+}
+
+
+
+async function concurrent4(){
+  // 제너레이터, 이터레이터 
+  
+}
+
 
 export async function main() {
   const file = getFile("file1.png");
@@ -80,4 +115,21 @@ export async function main() {
     () => getFile("file2.png"),
     () => getFile("file3.png"),
   ]);
+
+  const iterator = gen();
+  iterator.next();
+
+  console.log([...gen()]);
+
+  const arr = [1, 2, 3, 4, 5];
+  const iterator2 = arr[Symbol.iterator]();
+  console.log(iterator2.next());
+
+  const iterator = take(3, [1,2,3,4,5,6,7]);
+  iterator.next();
+  console.log(...take(4, [1,2,3,4,5]));
+
+  const iterator = chunk(3, [1,2,3,4,5,6]);
+
+  console.log(iterator.next().value);
 }
