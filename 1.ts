@@ -69,11 +69,29 @@ function* chunk<T>(size: number, iterable: iterable<T>){
   }
 }
 
+function* map<A>(f: (a: A) => B, iterable: Iterable<A>): IterableIterator<B>{
+  for (const a of iterable){
+    yield f(a);
+  }
+}
 
+async function fromAsync(iterable: Iterable<Promise<T>>){
+  const arr: Awaited<T>[] = [];
+  for await (const a of iterable){
+    arr.push(a);
+  }
+  return arr;
+}
 
-async function concurrent4(){
+async function concurrent4(limit: number, fs: (() => Promise<T>)[]){
   // 제너레이터, 이터레이터 
-  
+  const result = 
+    await fromAsync(
+      map(ps => Promise.all(ps),
+        map(fs => fs.map(f => f()), 
+          chunk(limit, fs))));
+    
+  return result.flat();
 }
 
 
@@ -132,4 +150,13 @@ export async function main() {
   const iterator = chunk(3, [1,2,3,4,5,6]);
 
   console.log(iterator.next().value);
+
+  const files = await concurrent2(2, [
+    () => getFile('file1.png'),
+    () => getFile('file2.png'),
+    () => getFile('file3.png'),
+    () => getFile('file4.png'),
+  ]);
+
+  console.log(await files.next().value);
 }
